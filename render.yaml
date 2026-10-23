@@ -10,7 +10,7 @@ services:
       - key: TZ
         value: America/Argentina/Buenos_Aires
       - key: NODE_VERSION
-        value: 20.x
+        value: 22.x
       - key: SUPABASE_URL
         value: https://rsvajuxihvmpmrmlcbul.supabase.co
       - key: NEW_SUPABASE_URL

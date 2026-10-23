@@ -1,6 +1,16 @@
 // ==============================================================
 // 🔧 UTILIDADES COMPARTIDAS — Módulo Central
 // ==============================================================
+let WebSocketImpl;
+try {
+    WebSocketImpl = (typeof globalThis.WebSocket !== 'undefined') ? globalThis.WebSocket : require('ws');
+    if (typeof globalThis.WebSocket === 'undefined') {
+        globalThis.WebSocket = WebSocketImpl;
+    }
+} catch (e) {
+    // ws package fallback
+}
+
 const { JWT } = require('google-auth-library');
 const { createClient } = require('@supabase/supabase-js');
 
@@ -56,7 +66,12 @@ const serviceAccountAuth = (process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL && process.
 }) : null;
 
 const supabase = (process.env.SUPABASE_URL && process.env.SUPABASE_KEY) 
-    ? createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY) 
+    ? createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY, {
+        auth: { persistSession: false },
+        realtime: {
+            transport: WebSocketImpl
+        }
+    }) 
     : null;
 
 // ==============================================================
