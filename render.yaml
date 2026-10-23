@@ -7,6 +7,8 @@ services:
     buildCommand: npm install
     startCommand: node server.js
     envVars:
+      - key: TZ
+        value: America/Argentina/Buenos_Aires
       - key: NODE_VERSION
         value: 20.x
       - key: SUPABASE_URL

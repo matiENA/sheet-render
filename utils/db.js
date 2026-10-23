@@ -36,6 +36,11 @@ if (isConfigured) {
     try {
         pool = new Pool(poolConfig);
 
+        // Asegurar que cada conexión del pool opere en la zona horaria de Argentina
+        pool.on('connect', (client) => {
+            client.query("SET timezone = 'America/Argentina/Buenos_Aires'").catch(() => {});
+        });
+
         pool.on('error', (err) => {
             console.error('⚠️ [PostgreSQL] Error en cliente inactivo del pool:', err.message);
         });
