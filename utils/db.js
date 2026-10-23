@@ -24,6 +24,9 @@ const poolConfig = {
     // ⚡ 4. Reciclar conexiones periódicamente para forzar la recolección de basura del GC
     maxUses: parseInt(process.env.PG_MAX_USES || '7500', 10),
 
+    // ⚡ 5. Zona horaria oficial para Argentina (-03:00)
+    options: "-c timezone=America/Argentina/Buenos_Aires",
+
     // SSL seguro para Supabase / Render / Neon / AWS RDS
     ssl: (process.env.NODE_ENV === 'production' || (DATABASE_URL && !DATABASE_URL.includes('localhost') && !DATABASE_URL.includes('127.0.0.1')))
         ? { rejectUnauthorized: false }
@@ -35,11 +38,6 @@ let pool = null;
 if (isConfigured) {
     try {
         pool = new Pool(poolConfig);
-
-        // Asegurar que cada conexión del pool opere en la zona horaria de Argentina
-        pool.on('connect', (client) => {
-            client.query("SET timezone = 'America/Argentina/Buenos_Aires'").catch(() => {});
-        });
 
         pool.on('error', (err) => {
             console.error('⚠️ [PostgreSQL] Error en cliente inactivo del pool:', err.message);
