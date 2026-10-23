@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EOR Flota — Asistente Inteligente de Operaciones (Gemini)</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚚</text></svg>">
+    <link rel="stylesheet" href="/bot/css/bot.css">
+</head>
+<body>
+
+    <!-- ==================== BARRA LATERAL (SIDEBAR) ==================== -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="brand-icon">🚚</div>
+            <div class="brand-title">
+                <h1>EOR ASISTENTE</h1>
+                <div class="status-badge" id="ram-status-badge">
+                    <span class="status-dot"></span> RAM Hot Conectada
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar-content">
+            <!-- Monitor en vivo de flota -->
+            <div class="metrics-box">
+                <div class="metrics-title">📊 Flota en Vivo (RAM)</div>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-num" id="metric-total-uts">--</div>
+                        <div class="metric-label">Total UTs</div>
+                    </div>
+                    <div class="metric-card green">
+                        <div class="metric-num" id="metric-uts-activas">--</div>
+                        <div class="metric-label">Con Chofer</div>
+                    </div>
+                    <div class="metric-card amber">
+                        <div class="metric-num" id="metric-uts-paradas">--</div>
+                        <div class="metric-label">Disponibles</div>
+                    </div>
+                    <div class="metric-card red">
+                        <div class="metric-num" id="metric-novedades">--</div>
+                        <div class="metric-label">Novedades</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Consultas Rápidas Frecuentes -->
+            <div>
+                <div class="quick-queries-title">💡 Preguntas Rápidas</div>
+                <div class="quick-queries-list" id="quick-queries">
+                    <!-- Inyectadas dinámicamente por botApp.js -->
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar-footer">
+            <button class="action-btn" id="clear-chat-btn">
+                🗑️ Limpiar Conversación
+            </button>
+            <a href="/" target="_blank" class="action-btn" style="text-decoration: none; color: var(--accent-cyan); border-color: rgba(6, 182, 212, 0.3);">
+                🖥️ Abrir Diagramas Kiosko ↗
+            </a>
+        </div>
+    </aside>
+
+    <!-- ==================== ÁREA PRINCIPAL DE CONVERSACIÓN ==================== -->
+    <main class="main-chat">
+        <!-- Header -->
+        <header class="chat-header">
+            <div class="chat-header-title">
+                <button class="toggle-sidebar-btn" id="toggle-sidebar-btn" title="Menú">☰</button>
+                <div>
+                    <h2>Asistente Operativo de Flota</h2>
+                    <p>Consultas en lenguaje natural conectadas en vivo a RAM y Storage</p>
+                </div>
+            </div>
+            <div class="chat-header-actions">
+                <div class="header-badge" id="model-badge">
+                    ⚡ Gemini 2.5 Flash + RAM
+                </div>
+                <button class="input-action-btn" id="tts-btn" title="Activar/Desactivar lectura en voz alta">
+                    🔊
+                </button>
+            </div>
+        </header>
+
+        <!-- Contenedor de Mensajes -->
+        <div class="messages-container" id="messages-container">
+            <!-- Mensaje inicial de bienvenida -->
+            <div class="message assistant">
+                <div class="avatar">🚚</div>
+                <div class="bubble">
+                    <div class="bubble-content">
+                        <h3>👋 ¡Hola! Soy el Asistente Operativo de EOR Logística.</h3>
+                        <p>Tengo conexión directa en tiempo real a la memoria RAM del sistema con <strong>171 choferes</strong>, <strong>270 unidades de transporte (UT)</strong>, novedades de taller y viajes de ruta.</p>
+                        <p>Puedes hacerme cualquier pregunta operativa, por ejemplo:</p>
+                        <ul>
+                            <li><strong>"¿Quién maneja la UT 291 hoy y qué patente tiene?"</strong></li>
+                            <li><strong>"¿Qué unidades están en taller o paradas?"</strong></li>
+                            <li><strong>"DNI, contacto y vencimiento de licencia de Acuña"</strong></li>
+                            <li><strong>"Resumen de flota del servicio METANOL"</strong></li>
+                            <li><strong>"¿Cuántos viajes y kilómetros hizo Acuña este mes?"</strong></li>
+                        </ul>
+                        <p style="margin-top: 10px; color: #94A3B8; font-size: 12px;"><em>Tip: Puedes dictar tu pregunta presionando el botón del micrófono 🎙️ o seleccionar una sugerencia abajo.</em></p>
+                    </div>
+                    <div class="message-time">En línea</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Barra de Sugerencias Rápidas (Chips) -->
+        <div class="chips-bar" id="chips-container">
+            <!-- Inyectados dinámicamente -->
+        </div>
+
+        <!-- Barra de Entrada de Consulta -->
+        <div class="chat-input-wrapper">
+            <div class="chat-input-box">
+                <button class="input-action-btn" id="mic-btn" title="Dictar por voz">
+                    🎙️
+                </button>
+                <textarea id="user-input" rows="1" placeholder="Escribe o dicta tu consulta operativa..."></textarea>
+                <button class="input-action-btn send-btn" id="send-btn" title="Enviar consulta">
+                    ➤
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script src="/bot/js/botApp.js"></script>
+</body>
+</html>

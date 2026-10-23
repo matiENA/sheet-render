@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: sheet-render
+    env: node
+    plan: free
+    region: virginia
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_VERSION
+        value: 20.x
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: KM_RAM_DIAS
+        value: 60
+      - key: KM_SERVICE_URL
+        value: https://km-extractor-service.onrender.com
+      - key: GOOGLE_SERVICE_ACCOUNT_EMAIL
+        sync: false
+      - key: GOOGLE_PRIVATE_KEY
+        sync: false
