@@ -5,7 +5,7 @@ const express = require('express');
  * Expone endpoints ligeros que devuelven solo lo que DASH necesita,
  * sin enviar la estructura completa de diagramas/días/ISO.
  */
-module.exports = function createDashRouter(cacheDatosGlobales, io) {
+module.exports = function createDashRouter(cacheDatosGlobales, io, ioDash = null) {
     const router = express.Router();
 
     // GET /api/dash/flota — Lista ligera para autocompletado y enriquecimiento
@@ -617,9 +617,11 @@ module.exports = function createDashRouter(cacheDatosGlobales, io) {
                 }
 
                 // D. Broadcast Socket.io
-                if (io) {
+                if (io || ioDash) {
                     const { buildSocketPayload } = require('../cache/builder');
-                    io.emit('datos_actualizados', buildSocketPayload(cacheDatosGlobales));
+                    const payload = buildSocketPayload(cacheDatosGlobales);
+                    if (io) io.emit('datos_actualizados', payload);
+                    if (ioDash) ioDash.emit('datos_actualizados', payload);
                 }
             }
 

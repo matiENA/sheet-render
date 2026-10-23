@@ -57,8 +57,8 @@ function buildSocketPayload(cache) {
     };
 }
 
-function emitirDatosSiCambiaron(io, cacheDatosGlobales) {
-    if (!io) return false;
+function emitirDatosSiCambiaron(io, cacheDatosGlobales, ioDash = null) {
+    if (!io && !ioDash) return false;
     const payload = buildSocketPayload(cacheDatosGlobales);
     if (!payload || !payload.diagramas) return false;
 
@@ -70,7 +70,8 @@ function emitirDatosSiCambiaron(io, cacheDatosGlobales) {
     }
 
     lastBroadcastHash = hash;
-    io.emit('datos_actualizados', payload);
+    if (io) io.emit('datos_actualizados', payload);
+    if (ioDash) ioDash.emit('datos_actualizados', payload);
     console.log(`📡 [Socket.io] Broadcast emitido (cambio detectado, hash: ${hash.substring(0, 8)}, ${(Buffer.byteLength(payloadStr) / 1024).toFixed(1)} KB raw).`);
     return true;
 }
@@ -602,7 +603,7 @@ async function actualizarCacheDesdeSupabase(cacheDatosGlobales, io, ioDash, opci
         console.log(`✅ [RAM Supabase] Caché ensamblado en ${Date.now() - t0} ms (${catalogoUnidades.length} UTs, ${diagramasHibridos.length} choferes, ${Object.keys(viajesFinales).length} con KM en RAM).`);
 
         // Emitir WebSocket a clientes conectados (solo si hubo cambio real en los datos)
-        if (io) emitirDatosSiCambiaron(io, cacheDatosGlobales);
+        if (io || ioDash) emitirDatosSiCambiaron(io, cacheDatosGlobales, ioDash);
         if (ioDash && cacheDatosGlobales.novedades && cacheDatosGlobales.novedades.length > 0) {
             ioDash.emit('novedades_actualizadas', cacheDatosGlobales.novedades);
         }
@@ -1783,6 +1784,29 @@ function iniciarCachePolling(cacheDatosGlobales, io, ioDash) {
         console.log("⏱️ Refresco periódico desde Supabase (5 min, Dirty Check activado)..."); 
         flujoEncoladoGlobal(cacheDatosGlobales, io, ioDash, { forceFull: false, recargarKm: false }); 
     }, 5 * 60 * 1000);
+
+    // 🔄 Sincronización autónoma de Partición 6 (Movimientos Activos y Desuniones)
+    // Mantiene Supabase y Hot RAM al día desde Google Sheets cuando n8n está inactivo
+    setTimeout(() => {
+        try {
+            const { sincronizarMovimientosDesdeSheets } = require('../routes/movimientos');
+            sincronizarMovimientosDesdeSheets(cacheDatosGlobales, io, ioDash).catch(e => {
+                console.warn("⚠️ [Partición 6 Auto-Sync] Advertencia en ciclo inicial:", e.message);
+            });
+        } catch (eReq) {
+            console.warn("⚠️ [Partición 6 Auto-Sync] No se pudo cargar módulo movimientos:", eReq.message);
+        }
+
+        setInterval(async () => {
+            try {
+                console.log("⏱️ [Partición 6 Auto-Sync] Sincronizando Movimientos y Desuniones desde Google Sheets...");
+                const { sincronizarMovimientosDesdeSheets } = require('../routes/movimientos');
+                await sincronizarMovimientosDesdeSheets(cacheDatosGlobales, io, ioDash);
+            } catch (eSync) {
+                console.warn("⚠️ [Partición 6 Auto-Sync] Error en ciclo periódico:", eSync.message);
+            }
+        }, 5 * 60 * 1000);
+    }, 45 * 1000); // Primer barrido a los 45s tras el arranque
 }
 
 module.exports = { 

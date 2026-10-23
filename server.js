@@ -30,6 +30,7 @@ const createDashRouter = require('./routes/dash');
 const createDiagramasRouter = require('./routes/diagramas');
 const createServiciosRouter = require('./routes/servicios');
 const createActivosRouter = require('./routes/activos');
+const createMovimientosRouter = require('./routes/movimientos');
 
 // ==============================================================
 // 🚀 EXPRESS + SOCKET.IO
@@ -341,8 +342,22 @@ app.use('/api/servicios', createServiciosRouter(cacheDatosGlobales));
 // Activos — Catálogo canónico de tractores, semis y gestión de acoples
 app.use('/api', createActivosRouter(cacheDatosGlobales, io));
 
+// Movimientos — Partición 6: Recorte diario y sincronización Supabase (con desuniones)
+app.use('/api/movimientos', createMovimientosRouter(cacheDatosGlobales, io, ioDash));
+
+// Alias directo para trigger de Apps Script /sync
+app.post('/sync', async (req, res) => {
+    try {
+        const { sincronizarMovimientosDesdeSheets } = require('./routes/movimientos');
+        const resultado = await sincronizarMovimientosDesdeSheets(cacheDatosGlobales, io, ioDash, req.body?.dia);
+        res.json(resultado);
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
 // DASH — API ligera (solo flota + usuarios, sin días) + Legajo bajo demanda
-const dashRouter = createDashRouter(cacheDatosGlobales, io);
+const dashRouter = createDashRouter(cacheDatosGlobales, io, ioDash);
 app.use('/api/dash', dashRouter);
 // Alias para acceso directo a chofer y legajo desde el frontend (/api/chofer/:id/legajo)
 app.use('/api/chofer', (req, res, next) => {

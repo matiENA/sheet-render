@@ -134,11 +134,38 @@ module.exports = function(cacheDatosGlobales, io, ioDash, cargarNovedades, fetch
                 return res.status(200).json({ success: true, message: "Sincronización de diagramas a Master iniciada" });
             }
 
+            // ==============================================================
+            // 6. WEBHOOK: MOVIMIENTOS ACTIVOS Y DESUNIONES (PARTICIÓN 6)
+            // ==============================================================
+            if (body && (
+                body.action === 'sync_movimientos' || 
+                body.action === 'webhook_update_movimientos' || 
+                body.action === 'recorte-movimientos' ||
+                body.action === 'movimientos' ||
+                body.tipo === 'movimientos'
+            )) {
+                const { sincronizarMovimientosDesdeSheets } = require('./routes/movimientos');
+                const resultado = await sincronizarMovimientosDesdeSheets(cacheDatosGlobales, io, ioDash, body.dia);
+                return res.status(200).json(resultado);
+            }
+
             return res.status(200).json({ success: true, message: "Ping ignorado" });
 
         } catch (error) {
             console.error("❌ Error crítico en Webhook:", error);
             return res.status(500).json({ success: false, error: "Error procesando el webhook" });
+        }
+    });
+
+    // Endpoint directo para triggers de Apps Script o n8n (/api/webhook/movimientos o /api/webhook/recorte-movimientos)
+    router.post(['/movimientos', '/recorte-movimientos'], async (req, res) => {
+        try {
+            const { sincronizarMovimientosDesdeSheets } = require('./routes/movimientos');
+            const resultado = await sincronizarMovimientosDesdeSheets(cacheDatosGlobales, io, ioDash, req.body?.dia);
+            return res.status(200).json(resultado);
+        } catch (e) {
+            console.error("❌ Error en webhook de Movimientos:", e);
+            return res.status(500).json({ success: false, error: e.message });
         }
     });
 
