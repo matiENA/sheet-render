@@ -149,6 +149,34 @@ module.exports = function(cacheDatosGlobales, io, ioDash, cargarNovedades, fetch
                 return res.status(200).json(resultado);
             }
 
+            // ==============================================================
+            // 7. WEBHOOK: DÍAS DIAGRAMA (PARTICIÓN 5)
+            // ==============================================================
+            if (body && (
+                body.action === 'sync_diagramas' || 
+                body.action === 'diagramas' || 
+                body.action === 'dias-diagrama' ||
+                body.tipo === 'diagramas'
+            )) {
+                const { sincronizarDiagramasDesdeSheets } = require('./routes/diagramasSync');
+                const resultado = await sincronizarDiagramasDesdeSheets(cacheDatosGlobales, io, ioDash, body.mesTab, body.anio);
+                return res.status(200).json(resultado);
+            }
+
+            // ==============================================================
+            // 8. WEBHOOK: KILÓMETROS (PARTICIÓN 7)
+            // ==============================================================
+            if (body && (
+                body.action === 'sync_km' || 
+                body.action === 'km' || 
+                body.action === 'kilometros' ||
+                body.tipo === 'km'
+            )) {
+                const { sincronizarKmDesdeSheets } = require('./routes/kmSync');
+                const resultado = await sincronizarKmDesdeSheets(cacheDatosGlobales, io, ioDash);
+                return res.status(200).json(resultado);
+            }
+
             return res.status(200).json({ success: true, message: "Ping ignorado" });
 
         } catch (error) {
@@ -165,6 +193,30 @@ module.exports = function(cacheDatosGlobales, io, ioDash, cargarNovedades, fetch
             return res.status(200).json(resultado);
         } catch (e) {
             console.error("❌ Error en webhook de Movimientos:", e);
+            return res.status(500).json({ success: false, error: e.message });
+        }
+    });
+
+    // Endpoint directo para triggers de Diagramas (/api/webhook/diagramas)
+    router.post(['/diagramas', '/dias-diagrama'], async (req, res) => {
+        try {
+            const { sincronizarDiagramasDesdeSheets } = require('./routes/diagramasSync');
+            const resultado = await sincronizarDiagramasDesdeSheets(cacheDatosGlobales, io, ioDash, req.body?.mesTab, req.body?.anio);
+            return res.status(200).json(resultado);
+        } catch (e) {
+            console.error("❌ Error en webhook de Diagramas:", e);
+            return res.status(500).json({ success: false, error: e.message });
+        }
+    });
+
+    // Endpoint directo para triggers de Kilómetros (/api/webhook/km)
+    router.post(['/km', '/kilometros'], async (req, res) => {
+        try {
+            const { sincronizarKmDesdeSheets } = require('./routes/kmSync');
+            const resultado = await sincronizarKmDesdeSheets(cacheDatosGlobales, io, ioDash);
+            return res.status(200).json(resultado);
+        } catch (e) {
+            console.error("❌ Error en webhook de Kilómetros:", e);
             return res.status(500).json({ success: false, error: e.message });
         }
     });

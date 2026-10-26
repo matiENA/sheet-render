@@ -1807,6 +1807,52 @@ function iniciarCachePolling(cacheDatosGlobales, io, ioDash) {
             }
         }, 5 * 60 * 1000);
     }, 45 * 1000); // Primer barrido a los 45s tras el arranque
+
+    // 📅 Sincronización autónoma de Partición 5 (Días Diagrama - EOR)
+    // Mantiene Supabase y Hot RAM al día desde Google Sheets sin depender de n8n local
+    setTimeout(() => {
+        try {
+            const { sincronizarDiagramasDesdeSheets } = require('../routes/diagramasSync');
+            sincronizarDiagramasDesdeSheets(cacheDatosGlobales, io, ioDash).catch(e => {
+                console.warn("⚠️ [Partición 5 Auto-Sync] Advertencia en ciclo inicial:", e.message);
+            });
+        } catch (eReq) {
+            console.warn("⚠️ [Partición 5 Auto-Sync] No se pudo cargar módulo diagramasSync:", eReq.message);
+        }
+
+        setInterval(async () => {
+            try {
+                console.log("⏱️ [Partición 5 Auto-Sync] Sincronizando Días Diagrama desde Google Sheets...");
+                const { sincronizarDiagramasDesdeSheets } = require('../routes/diagramasSync');
+                await sincronizarDiagramasDesdeSheets(cacheDatosGlobales, io, ioDash);
+            } catch (eSync) {
+                console.warn("⚠️ [Partición 5 Auto-Sync] Error en ciclo periódico:", eSync.message);
+            }
+        }, 15 * 60 * 1000); // Cada 15 minutos (Diffing O(1) Zero Egress)
+    }, 60 * 1000); // Primer barrido a los 60s tras el arranque
+
+    // 🚚 Sincronización autónoma de Partición 7 (Kilómetros y Viajes)
+    // Mantiene public.choferes_km_mensual al día sin depender de n8n local
+    setTimeout(() => {
+        try {
+            const { sincronizarKmDesdeSheets } = require('../routes/kmSync');
+            sincronizarKmDesdeSheets(cacheDatosGlobales, io, ioDash).catch(e => {
+                console.warn("⚠️ [Partición 7 Auto-Sync] Advertencia en ciclo inicial:", e.message);
+            });
+        } catch (eReq) {
+            console.warn("⚠️ [Partición 7 Auto-Sync] No se pudo cargar módulo kmSync:", eReq.message);
+        }
+
+        setInterval(async () => {
+            try {
+                console.log("⏱️ [Partición 7 Auto-Sync] Sincronizando Kilómetros desde Google Sheets...");
+                const { sincronizarKmDesdeSheets } = require('../routes/kmSync');
+                await sincronizarKmDesdeSheets(cacheDatosGlobales, io, ioDash);
+            } catch (eSync) {
+                console.warn("⚠️ [Partición 7 Auto-Sync] Error en ciclo periódico:", eSync.message);
+            }
+        }, 30 * 60 * 1000); // Cada 30 minutos (Diffing O(1) Zero Egress)
+    }, 90 * 1000); // Primer barrido a los 90s tras el arranque
 }
 
 module.exports = { 

@@ -31,6 +31,8 @@ const createDiagramasRouter = require('./routes/diagramas');
 const createServiciosRouter = require('./routes/servicios');
 const createActivosRouter = require('./routes/activos');
 const createMovimientosRouter = require('./routes/movimientos');
+const createDiagramasSyncRouter = require('./routes/diagramasSync');
+const createKmSyncRouter = require('./routes/kmSync');
 
 // ==============================================================
 // 🚀 EXPRESS + SOCKET.IO
@@ -345,13 +347,41 @@ app.use('/api', createActivosRouter(cacheDatosGlobales, io));
 // Movimientos — Partición 6: Recorte diario y sincronización Supabase (con desuniones)
 app.use('/api/movimientos', createMovimientosRouter(cacheDatosGlobales, io, ioDash));
 
-// Alias directo para trigger de Apps Script /sync
-app.post('/sync', async (req, res) => {
+// Sincronizadores Autónomos de Particiones (Sheets -> Supabase)
+app.use('/api/sync/diagramas', createDiagramasSyncRouter(cacheDatosGlobales, io, ioDash));
+app.use('/api/sync/km', createKmSyncRouter(cacheDatosGlobales, io, ioDash));
+
+// Endpoint unificado /sync o /api/sync para UptimeRobot, webhooks o llamadas HTTP
+app.all(['/sync', '/api/sync', '/api/sync/all'], async (req, res) => {
     try {
+        const p = String(req.query?.p || req.body?.particion || req.query?.particion || 'all').toLowerCase();
         const { sincronizarMovimientosDesdeSheets } = require('./routes/movimientos');
-        const resultado = await sincronizarMovimientosDesdeSheets(cacheDatosGlobales, io, ioDash, req.body?.dia);
-        res.json(resultado);
+        const { sincronizarDiagramasDesdeSheets } = require('./routes/diagramasSync');
+        const { sincronizarKmDesdeSheets } = require('./routes/kmSync');
+
+        const resultados = {};
+
+        if (p === '5' || p === 'diagramas') {
+            resultados.particion_5 = await sincronizarDiagramasDesdeSheets(cacheDatosGlobales, io, ioDash, req.body?.mesTab || req.query?.mesTab, req.body?.anio || req.query?.anio);
+        } else if (p === '7' || p === 'km') {
+            resultados.particion_7 = await sincronizarKmDesdeSheets(cacheDatosGlobales, io, ioDash);
+        } else if (p === '6' || p === 'movimientos') {
+            resultados.particion_6 = await sincronizarMovimientosDesdeSheets(cacheDatosGlobales, io, ioDash, req.body?.dia || req.query?.dia);
+        } else {
+            // Sincronización completa autónoma (Partición 6, Partición 5 y Partición 7)
+            resultados.particion_6 = await sincronizarMovimientosDesdeSheets(cacheDatosGlobales, io, ioDash, req.body?.dia || req.query?.dia);
+            resultados.particion_5 = await sincronizarDiagramasDesdeSheets(cacheDatosGlobales, io, ioDash, req.body?.mesTab || req.query?.mesTab, req.body?.anio || req.query?.anio);
+            resultados.particion_7 = await sincronizarKmDesdeSheets(cacheDatosGlobales, io, ioDash);
+        }
+
+        res.json({
+            success: true,
+            timestamp: new Date().toISOString(),
+            modo: p,
+            resultados
+        });
     } catch (e) {
+        console.error("❌ Error en endpoint /sync:", e);
         res.status(500).json({ success: false, error: e.message });
     }
 });

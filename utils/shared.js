@@ -48,10 +48,10 @@ const mesesLargo = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "juli
 // 🔑 IDs de Google Spreadsheets
 // ==============================================================
 const ID_SPREADSHEET_MASTER = process.env.SPREADSHEET_ID || '1eQ9Y5diL5fwxYTxvseNgZJFbX-lSUQ13axbp3cLiqPc';
-const ID_SPREADSHEET_DIAGRAMAS = '1mhfXpFCF6upMlnRnZjDdBVS_wqTx5q8v0qQArNCnNAU';
+const ID_SPREADSHEET_DIAGRAMAS = process.env.ID_SPREADSHEET_DIAGRAMAS || '14jgQZF0gkbT7k3mps1k3dM3qtoaseoCOUfK4PFRozKU';
 const ID_SHEET_OBSERVACIONES = '1VwCNK89ecaac7IDlMWWCLHRqZoch9HB6vop5AfQEaA0';
 const ID_SHEET_APTOS_MEDICOS = '1oJmN8hurfHfNnGBYUFcBdlrIj2VUzeIyq0ZTWxTpYNI';
-const ID_SHEET_KILOMETROS = '1Wr-_P4mDvldif_cAx08sp7yT8uTUrajI2HQAJF6tnGM';
+const ID_SHEET_KILOMETROS = process.env.ID_SHEET_KM || process.env.SHEET_KM_ID || '1d5dIS1rbOg3q7D0A4eDA_mcdSy1Yfwfx6M6sZ8Aenzw';
 const ID_SHEET_HABILITACIONES = '1hPDno09tMBtKh7aIdsvzEYcyOY7leYj2B6XnniD0aXg';
 const ID_SHEET_DOCUMENTOS = '1pnYXKDSv70Vq78Rchxus5FHMKdgXdbfltVsEg6vArjo';
 const ID_SHEET_MOVIMIENTOS = process.env.MES_MOVIMIENTOS_ID || '14Mb5rD853zxDkaLDS-IrW-OBDTDBjuJxn_3olXeWlkc';
