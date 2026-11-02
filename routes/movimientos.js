@@ -21,7 +21,7 @@ const {
 
 const blacklist = new Set([
     'TRACTOR', 'SEMI', 'CHOFER', 'NOMBRE', 'APELLIDO', '1', '0', '-', 'S/A', 'VACANTE',
-    'FECHA', 'N°', 'CISTERNADO', 'TOTAL', 'LIVIANO', 'METANOL', 'CAMPO', 'GLP', 'SOCIO', 'OCTUBRE',
+    'FECHA', 'N°', 'CISTERNADO', 'TOTAL', 'LIVIANO', 'METANOL', 'CAMPO', 'GLP', 'SOCIO', 'OCTUBRE', 'NOVIEMBRE',
     'DESCANSO', 'FRANCO', 'VACACIONES', 'LICENCIA', 'GUARDIA', 'EN GESTION', 'DISPONIBLE'
 ]);
 
@@ -35,7 +35,7 @@ async function extraerPareosYDesunionesDesdeSheets(diaParam = null) {
         return cacheRecorte;
     }
 
-    const tab = await getTabName(ID_SHEET_MOVIMIENTOS, 'Mov.Unidades', 'OCTUBRE 2026- Mov.Unidades y Choferes');
+    const tab = await getTabName(ID_SHEET_MOVIMIENTOS, 'Mov.Unidades', 'NOVIEMBRE 2026- Mov.Unidades y Choferes');
     const rows = await fetchRango(ID_SHEET_MOVIMIENTOS, `'${tab}'!A1:ZZ350`);
 
     const hoyAr = getFechaArgentina();

@@ -5,6 +5,7 @@ node_modules/
 cache/*.json
 .DS_Store
 *.log
+*.bak_rotacion
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

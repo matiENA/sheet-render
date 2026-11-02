@@ -85,7 +85,7 @@ async function sincronizarDiagramasDesdeSheets(cacheDatosGlobales = null, io = n
     const defaultTab = `${mesesAbrev[hoyAr.getMonth()]}-${yy}`;
     
     const spreadsheetId = process.env.ID_SPREADSHEET_DIAGRAMAS || ID_SPREADSHEET_DIAGRAMAS || '14jgQZF0gkbT7k3mps1k3dM3qtoaseoCOUfK4PFRozKU';
-    const mesTab = mesTabParam || await getTabName(spreadsheetId, 'oct', defaultTab);
+    const mesTab = mesTabParam || await getTabName(spreadsheetId, defaultTab, defaultTab);
     const mesNumero = mNum;
     const mesStr = String(mesNumero).padStart(2, '0');
 
