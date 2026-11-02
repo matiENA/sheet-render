@@ -76,20 +76,23 @@ const blacklist = new Set([
 /**
  * Función central de extracción y sincronización de Partición 5
  */
-async function sincronizarDiagramasDesdeSheets(cacheDatosGlobales = null, io = null, ioDash = null, mesTabParam = null, anioParam = null) {
+async function sincronizarDiagramasDesdeSheets(cacheDatosGlobales = null, io = null, ioDash = null, mesTabParam = null, anioParam = null, forceOverwrite = false) {
     const t0 = Date.now();
     const hoyAr = getFechaArgentina();
-    const anio = anioParam ? parseInt(anioParam, 10) : hoyAr.getFullYear();
-    const mNum = hoyAr.getMonth() + 1;
-    const yy = String(anio).slice(-2);
-    const defaultTab = `${mesesAbrev[hoyAr.getMonth()]}-${yy}`;
-    
     const spreadsheetId = process.env.ID_SPREADSHEET_DIAGRAMAS || ID_SPREADSHEET_DIAGRAMAS || '14jgQZF0gkbT7k3mps1k3dM3qtoaseoCOUfK4PFRozKU';
+    const yyDefault = String(hoyAr.getFullYear()).slice(-2);
+    const defaultTab = `${mesesAbrev[hoyAr.getMonth()]}-${yyDefault}`;
     const mesTab = mesTabParam || await getTabName(spreadsheetId, defaultTab, defaultTab);
-    const mesNumero = mNum;
-    const mesStr = String(mesNumero).padStart(2, '0');
 
-    console.log(`🔄 [Partición 5 Auto-Sync] Sincronizando Días Diagrama (Pestaña: ${mesTab}, Año: ${anio})...`);
+    // Deducir mesNumero y anio dinámicamente desde el nombre de la pestaña (ej. 'Oct-26' -> mes 10, anio 2026)
+    const tabParts = mesTab.split('-');
+    const mIdx = mesesAbrev.findIndex(m => m.toLowerCase() === tabParts[0].toLowerCase());
+    const mesNumero = mIdx !== -1 ? (mIdx + 1) : (hoyAr.getMonth() + 1);
+    const anio = anioParam ? parseInt(anioParam, 10) : (tabParts[1] ? parseInt('20' + tabParts[1].replace(/\D/g, ''), 10) : hoyAr.getFullYear());
+    const mesStr = String(mesNumero).padStart(2, '0');
+    const maxDays = new Date(anio, mesNumero, 0).getDate();
+    
+    console.log(`🔄 [Partición 5 Auto-Sync] Sincronizando Días Diagrama (Pestaña: ${mesTab}, Mes: ${mesNumero}, Año: ${anio}, Días: ${maxDays}, Force: ${forceOverwrite})...`);
 
     if (!db.isConfigured()) {
         console.warn("⚠️ [Partición 5] Base de datos no configurada en db.js");
@@ -178,14 +181,26 @@ async function sincronizarDiagramasDesdeSheets(cacheDatosGlobales = null, io = n
         totalEvaluados++;
 
         const dayEntries = [];
+        const dayFound = new Set();
         for (const k of Object.keys(row)) {
             const trimmedKey = k.trim();
             const m = trimmedKey.match(/^(\d+)[\/\-](\d+)$/);
             if (m) {
-                dayEntries.push({ key: k, dayNum: parseInt(m[1], 10) });
+                const dNum = parseInt(m[1], 10);
+                const moNum = parseInt(m[2], 10);
+                if (moNum === mesNumero && dNum >= 1 && dNum <= maxDays && !dayFound.has(dNum)) {
+                    dayEntries.push({ key: k, dayNum: dNum });
+                    dayFound.add(dNum);
+                }
             } else {
-                const mNum = trimmedKey.match(/^([1-9]|[12]\d|3[01])$/);
-                if (mNum) dayEntries.push({ key: k, dayNum: parseInt(mNum[1], 10) });
+                const mNumCol = trimmedKey.match(/^([1-9]|[12]\d|3[01])$/);
+                if (mNumCol) {
+                    const dNum = parseInt(mNumCol[1], 10);
+                    if (dNum >= 1 && dNum <= maxDays && !dayFound.has(dNum)) {
+                        dayEntries.push({ key: k, dayNum: dNum });
+                        dayFound.add(dNum);
+                    }
+                }
             }
         }
         dayEntries.sort((a, b) => a.dayNum - b.dayNum);
@@ -217,7 +232,7 @@ async function sincronizarDiagramasDesdeSheets(cacheDatosGlobales = null, io = n
                 tira_dias: tiraDias,
                 contabilizador: contabilizador
             });
-        } else if (ex.tira_dias !== tiraDias) {
+        } else if (forceOverwrite || ex.tira_dias !== tiraDias) {
             modificadosCount++;
             deltaBatchMap.set(choferId, {
                 chofer_id: choferId,
@@ -289,8 +304,9 @@ module.exports = function(cacheDatosGlobales, io, ioDash) {
     // POST /api/sync/diagramas o /api/sync/diagramas/sync
     router.post(['/', '/sync', '/sync-supabase'], async (req, res) => {
         try {
-            const { mesTab, anio } = req.body || {};
-            const resultado = await sincronizarDiagramasDesdeSheets(cacheDatosGlobales, io, ioDash, mesTab, anio);
+            const { mesTab, anio, forceOverwrite, overwrite } = req.body || {};
+            const isOverwrite = Boolean(forceOverwrite || overwrite);
+            const resultado = await sincronizarDiagramasDesdeSheets(cacheDatosGlobales, io, ioDash, mesTab, anio, isOverwrite);
             res.json(resultado);
         } catch (err) {
             console.error('❌ Error en sincronización de diagramas:', err.message);
